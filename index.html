@@ -7,6 +7,7 @@
   </head>
   <body>
     <div id="click">Click to Authenticate</div>
+    <div id="result"></div>
 
     <script>
       document
@@ -38,6 +39,11 @@
               attestation: "none",
             },
           });
+
+          // Create and append a success message
+          const p = document.createElement("p");
+          p.textContent = "Authentication successful!";
+          document.querySelector("#result").appendChild(p);
 
           console.log("Authentication successful", credential);
         } catch (error) {
