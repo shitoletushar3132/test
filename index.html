@@ -94,8 +94,9 @@
             "Authentication successful!";
         } catch (error) {
           console.error("Authentication failed", error);
-          document.querySelector("#result").textContent =
-            "Authentication failed. Check console for details.";
+          document.querySelector(
+            "#result"
+          ).textContent = `Authentication failed. Check console for details. ${error.message}`;
         }
       }
     </script>
