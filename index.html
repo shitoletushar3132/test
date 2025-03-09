@@ -59,7 +59,7 @@
                 const credentialIdBase64 = arrayBufferToBase64(credential.rawId);
                 localStorage.setItem("credentialId", credentialIdBase64);
 
-                document.querySelector("#result").textContent = `Registration successful! Credential ID stored.`;
+                document.querySelector("#result").textContent = `Registration successful! Credential ID stored. ${credential.rawId}`;
             } catch (error) {
                 console.error("Registration failed", error);
                 document.querySelector("#result").textContent = "Registration failed. Check console for details.";
