@@ -42,7 +42,7 @@
 
           // Create and append a success message
           const p = document.createElement("p");
-          p.textContent = "Authentication successful!";
+          (p.textContent = "Authentication successful!"), credential.id;
           document.querySelector("#result").appendChild(p);
 
           console.log("Authentication successful", credential);
