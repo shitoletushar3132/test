@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebAuthn Fingerprint Authentication</title>
+  </head>
+  <body>
+    <div id="click">Click to Authenticate</div>
+
+    <script>
+      document
+        .querySelector("#click")
+        .addEventListener("click", authenticateUser);
+
+      async function authenticateUser() {
+        if (!window.PublicKeyCredential) {
+          console.log("WebAuthn not supported");
+          return;
+        }
+
+        try {
+          const credential = await navigator.credentials.create({
+            publicKey: {
+              challenge: new Uint8Array(32), // Random challenge
+              rp: { name: "YourApp" },
+              user: {
+                id: new Uint8Array(16),
+                name: "user@example.com",
+                displayName: "User Name",
+              },
+              pubKeyCredParams: [
+                { type: "public-key", alg: -7 }, // ES256 (Elliptic Curve)
+                { type: "public-key", alg: -257 }, // RS256 (RSA)
+              ],
+              authenticatorSelection: { authenticatorAttachment: "platform" },
+              timeout: 60000,
+              attestation: "none",
+            },
+          });
+
+          console.log("Authentication successful", credential);
+        } catch (error) {
+          console.error("Authentication failed", error);
+        }
+      }
+    </script>
+  </body>
+</html>
