@@ -1,104 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebAuthn Fingerprint Authentication</title>
-  </head>
-  <body>
+</head>
+<body>
     <h2>WebAuthn Authentication (No Backend)</h2>
     <button onclick="registerUser()">Register</button>
     <button onclick="authenticateUser()">Authenticate</button>
     <div id="result"></div>
 
     <script>
-      async function registerUser() {
-        if (!window.PublicKeyCredential) {
-          document.querySelector("#result").textContent =
-            "WebAuthn not supported";
-          return;
+        // Helper function: Convert ArrayBuffer to Base64
+        function arrayBufferToBase64(buffer) {
+            return btoa(String.fromCharCode(...new Uint8Array(buffer)));
         }
 
-        try {
-          const credential = await navigator.credentials.create({
-            publicKey: {
-              challenge: new Uint8Array(32), // Random challenge
-              rp: { name: "YourApp" },
-              user: {
-                id: new Uint8Array(16),
-                name: "user@example.com",
-                displayName: "User Name",
-              },
-              pubKeyCredParams: [
-                { type: "public-key", alg: -7 }, // ES256 (Elliptic Curve)
-                { type: "public-key", alg: -257 }, // RS256 (RSA)
-              ],
-              authenticatorSelection: {
-                authenticatorAttachment: "platform",
-                requireResidentKey: true,
-              },
-              timeout: 60000,
-              attestation: "none",
-            },
-          });
-
-          console.log("Registration successful", credential);
-
-          // Store credential ID in localStorage
-          localStorage.setItem("credentialId", credential.id);
-
-          document.querySelector(
-            "#result"
-          ).textContent = `Registration successful! Credential ID: ${credential.id}`;
-        } catch (error) {
-          console.error("Registration failed", error);
-          document.querySelector("#result").textContent =
-            "Registration failed. Check console for details.";
-        }
-      }
-
-      async function authenticateUser() {
-        if (!window.PublicKeyCredential) {
-          document.querySelector("#result").textContent =
-            "WebAuthn not supported";
-          return;
+        // Helper function: Convert Base64 to ArrayBuffer
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
         }
 
-        try {
-          // Retrieve stored credential ID
-          const storedCredentialId = localStorage.getItem("credentialId");
+        async function registerUser() {
+            if (!window.PublicKeyCredential) {
+                document.querySelector("#result").textContent = "WebAuthn not supported";
+                return;
+            }
 
-          if (!storedCredentialId) {
-            document.querySelector("#result").textContent =
-              "No stored credential found. Register first!";
-            return;
-          }
+            try {
+                const credential = await navigator.credentials.create({
+                    publicKey: {
+                        challenge: new Uint8Array(32), // Random challenge
+                        rp: { name: "YourApp" },
+                        user: {
+                            id: new Uint8Array(16),
+                            name: "user@example.com",
+                            displayName: "User Name",
+                        },
+                        pubKeyCredParams: [
+                            { type: "public-key", alg: -7 },  // ES256 (Elliptic Curve)
+                            { type: "public-key", alg: -257 } // RS256 (RSA)
+                        ],
+                        authenticatorSelection: { authenticatorAttachment: "platform", requireResidentKey: true },
+                        timeout: 60000,
+                        attestation: "none",
+                    },
+                });
 
-          const assertion = await navigator.credentials.get({
-            publicKey: {
-              challenge: new Uint8Array(32), // Random challenge
-              allowCredentials: [
-                {
-                  id: Uint8Array.from(atob(storedCredentialId), (c) =>
-                    c.charCodeAt(0)
-                  ),
-                  type: "public-key",
-                },
-              ],
-              timeout: 60000,
-            },
-          });
+                console.log("Registration successful", credential);
 
-          console.log("Authentication successful", assertion);
-          document.querySelector("#result").textContent =
-            "Authentication successful!";
-        } catch (error) {
-          console.error("Authentication failed", error);
-          document.querySelector(
-            "#result"
-          ).textContent = `Authentication failed. Check console for details. ${error.message}`;
+                // Convert credential ID to Base64 and store it
+                const credentialIdBase64 = arrayBufferToBase64(credential.rawId);
+                localStorage.setItem("credentialId", credentialIdBase64);
+
+                document.querySelector("#result").textContent = `Registration successful! Credential ID stored.`;
+            } catch (error) {
+                console.error("Registration failed", error);
+                document.querySelector("#result").textContent = "Registration failed. Check console for details.";
+            }
         }
-      }
+
+        async function authenticateUser() {
+            if (!window.PublicKeyCredential) {
+                document.querySelector("#result").textContent = "WebAuthn not supported";
+                return;
+            }
+
+            try {
+                const storedCredentialIdBase64 = localStorage.getItem("credentialId");
+                if (!storedCredentialIdBase64) {
+                    document.querySelector("#result").textContent = "No stored credential found. Register first!";
+                    return;
+                }
+
+                // Convert stored Base64 credential ID back to ArrayBuffer
+                const storedCredentialId = base64ToArrayBuffer(storedCredentialIdBase64);
+
+                const assertion = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: new Uint8Array(32), // Random challenge
+                        allowCredentials: [{ id: storedCredentialId, type: "public-key" }],
+                        timeout: 60000,
+                    },
+                });
+
+                console.log("Authentication successful", assertion);
+                document.querySelector("#result").textContent = "Authentication successful!";
+            } catch (error) {
+                console.error("Authentication failed", error);
+                document.querySelector("#result").textContent = "Authentication failed. Check console for details.";
+            }
+        }
     </script>
-  </body>
+</body>
 </html>
