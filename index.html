@@ -6,17 +6,16 @@
     <title>WebAuthn Fingerprint Authentication</title>
   </head>
   <body>
-    <div id="click">Click to Authenticate</div>
+    <h2>WebAuthn Authentication (No Backend)</h2>
+    <button onclick="registerUser()">Register</button>
+    <button onclick="authenticateUser()">Authenticate</button>
     <div id="result"></div>
 
     <script>
-      document
-        .querySelector("#click")
-        .addEventListener("click", authenticateUser);
-
-      async function authenticateUser() {
+      async function registerUser() {
         if (!window.PublicKeyCredential) {
-          console.log("WebAuthn not supported");
+          document.querySelector("#result").textContent =
+            "WebAuthn not supported";
           return;
         }
 
@@ -34,20 +33,69 @@
                 { type: "public-key", alg: -7 }, // ES256 (Elliptic Curve)
                 { type: "public-key", alg: -257 }, // RS256 (RSA)
               ],
-              authenticatorSelection: { authenticatorAttachment: "platform" },
+              authenticatorSelection: {
+                authenticatorAttachment: "platform",
+                requireResidentKey: true,
+              },
               timeout: 60000,
               attestation: "none",
             },
           });
 
-          // Create and append a success message
-          const p = document.createElement("p");
-          p.textContent = `Authentication successful! , ${credential.id}`;
-          document.querySelector("#result").appendChild(p);
+          console.log("Registration successful", credential);
 
-          console.log("Authentication successful", credential);
+          // Store credential ID in localStorage
+          localStorage.setItem("credentialId", credential.id);
+
+          document.querySelector(
+            "#result"
+          ).textContent = `Registration successful! Credential ID: ${credential.id}`;
+        } catch (error) {
+          console.error("Registration failed", error);
+          document.querySelector("#result").textContent =
+            "Registration failed. Check console for details.";
+        }
+      }
+
+      async function authenticateUser() {
+        if (!window.PublicKeyCredential) {
+          document.querySelector("#result").textContent =
+            "WebAuthn not supported";
+          return;
+        }
+
+        try {
+          // Retrieve stored credential ID
+          const storedCredentialId = localStorage.getItem("credentialId");
+
+          if (!storedCredentialId) {
+            document.querySelector("#result").textContent =
+              "No stored credential found. Register first!";
+            return;
+          }
+
+          const assertion = await navigator.credentials.get({
+            publicKey: {
+              challenge: new Uint8Array(32), // Random challenge
+              allowCredentials: [
+                {
+                  id: Uint8Array.from(atob(storedCredentialId), (c) =>
+                    c.charCodeAt(0)
+                  ),
+                  type: "public-key",
+                },
+              ],
+              timeout: 60000,
+            },
+          });
+
+          console.log("Authentication successful", assertion);
+          document.querySelector("#result").textContent =
+            "Authentication successful!";
         } catch (error) {
           console.error("Authentication failed", error);
+          document.querySelector("#result").textContent =
+            "Authentication failed. Check console for details.";
         }
       }
     </script>
