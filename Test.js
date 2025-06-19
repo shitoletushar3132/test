@@ -6,3 +6,6 @@ name=name+"tushar"
 name = name+"Bhauso"
 
 console.log(name)
+
+name = name + "shitole"
+
