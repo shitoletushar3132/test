@@ -1,1 +1,1 @@
-console.log("how are you and ahow")
+console.log("how are you and ahow 2 500")
